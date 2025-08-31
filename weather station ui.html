@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+  <html>
+  <head>
+    <title>Weather Station</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      body { font-family: Arial; text-align: center; padding: 20px; }
+      canvas { max-width: 600px; margin: 20px auto; }
+    </style>
+  </head>
+  <body>
+    <h1>ESP8266 Weather Station</h1>
+    <div>
+      <strong>Temperature:</strong> <span id="temp">--</span> °C<br>
+      <strong>Humidity:</strong> <span id="hum">--</span> %<br>
+      <strong>Pressure:</strong> <span id="pres">--</span> hPa<br>
+    </div>
+
+    <canvas id="tempChart"></canvas>
+    <canvas id="humChart"></canvas>
+    <canvas id="presChart"></canvas>
+
+    <script>
+      let tempData = [], humData = [], presData = [], labels = [];
+      const maxPoints = 20;
+
+      const tempChart = new Chart(document.getElementById('tempChart'), {
+        type: 'line',
+        data: { labels: labels, datasets: [{ label: 'Temp (°C)', data: tempData, borderColor: 'red', fill: false }] },
+        options: { responsive: true }
+      });
+
+      const humChart = new Chart(document.getElementById('humChart'), {
+        type: 'line',
+        data: { labels: labels, datasets: [{ label: 'Humidity (%)', data: humData, borderColor: 'blue', fill: false }] },
+        options: { responsive: true }
+      });
+
+      const presChart = new Chart(document.getElementById('presChart'), {
+        type: 'line',
+        data: { labels: labels, datasets: [{ label: 'Pressure (hPa)', data: presData, borderColor: 'green', fill: false }] },
+        options: { responsive: true }
+      });
+
+      async function fetchData() {
+        const res = await fetch('/data');
+        const data = await res.json();
+        document.getElementById('temp').textContent = data.temp;
+        document.getElementById('hum').textContent = data.hum;
+        document.getElementById('pres').textContent = data.pres;
+
+        const time = new Date().toLocaleTimeString();
+        if (labels.length >= maxPoints) {
+          labels.shift(); tempData.shift(); humData.shift(); presData.shift();
+        }
+
+        labels.push(time);
+        tempData.push(data.temp);
+        humData.push(data.hum);
+        presData.push(data.pres);
+
+        tempChart.update();
+        humChart.update();
+        presChart.update();
+      }
+
+      setInterval(fetchData, 2000);
+    </script>
+  </body>
+  </html>
+  
